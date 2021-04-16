@@ -272,6 +272,13 @@ public class CreateApplicationBundleMojo extends AbstractMojo {
     private String jreFullPath;
 
     /**
+     * If true, no dependencies will be added. Par example for FAT-Jars.
+     *
+     * @parameter expression="false"
+     */
+    private boolean excludeDependencies;
+
+    /**
      * Bundle project as a Mac OS X application bundle.
      *
      * @throws MojoExecutionException If an unexpected error occurs during
@@ -405,7 +412,7 @@ public class CreateApplicationBundleMojo extends AbstractMojo {
 
         // 8. Create the DMG file
         if (generateDiskImageFile) {
-            if (SystemUtils.IS_OS_MAC_OSX) {
+            if (SystemUtils.IS_OS_MAC_OSX || SystemUtils.IS_OS_MAC) {
                 getLog().info("Generating the Disk Image file");
                 Commandline dmg = new Commandline();
                 try {
@@ -514,6 +521,11 @@ public class CreateApplicationBundleMojo extends AbstractMojo {
             FileUtils.copyFile(artifactFile, new File(javaDirectory, layout.pathOf(project.getArtifact())));
         } catch (IOException ex) {
             throw new MojoExecutionException("Could not copy artifact file " + artifactFile + " to " + javaDirectory, ex);
+        }
+
+        if (excludeDependencies) {
+            // skip adding dependencies from project.getArtifacts()
+            return list;
         }
 
         for (Artifact artifact : project.getArtifacts()) {
